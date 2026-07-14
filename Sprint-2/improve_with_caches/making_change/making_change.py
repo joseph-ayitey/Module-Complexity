@@ -1,5 +1,7 @@
 from typing import List
 
+_cache = {}
+
 
 def ways_to_make_change(total: int) -> int:
     """
@@ -12,8 +14,20 @@ def ways_to_make_change(total: int) -> int:
 
 def ways_to_make_change_helper(total: int, coins: List[int]) -> int:
     """
-    Helper function for ways_to_make_change to avoid exposing the coins parameter to callers.
+     Before: O(exponential) — many (total, coins) subproblems are recomputed
+    repeatedly as the recursion branches into overlapping sub-trees.
+
+    After: O(total × len(coins)) time and space — each unique (total, coins)
+    pair is computed once and cached. Subsequent calls return in O(1).
+
+    Cache key is (total, tuple(coins)) because the result depends on both the
+    remaining total and which coins are still available.
     """
+    key = (total, tuple(coins))
+    if key in _cache:
+        return _cache[key]
+    
+
     if total == 0 or len(coins) == 0:
         return 0
 
@@ -26,7 +40,9 @@ def ways_to_make_change_helper(total: int, coins: List[int]) -> int:
             if total_from_coins == total:
                 ways += 1
             else:
-                intermediate = ways_to_make_change_helper(total - total_from_coins, coins=coins[coin_index+1:])
-                ways += intermediate
+                ways += ways_to_make_change_helper(
+                    total - total_from_coins, coins=coins[coin_index + 1:]
+                )
             count_of_coin += 1
+            _cache[key] = ways
     return ways
